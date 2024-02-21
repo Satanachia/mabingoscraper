@@ -42,6 +42,13 @@ def getarticledata(insertdriver, link):
         arti = content.get_attribute("innerHTML")
         soup = BeautifulSoup(arti, features="lxml")
         text = soup.get_text()
+        
+        if(text == ""):
+            for source in soup.select("[src]"):
+                print(source["src"])
+            
+        
+        
         print(text)
 
 options = Options()
@@ -73,8 +80,10 @@ print()
 
 #test
 #getarticledata(driver, news_links[0])
-getarticledata(driver, news_links[1])
+#getarticledata(driver, news_links[1])
 #getarticledata(driver, news_links[2])
+getarticledata(driver, news_links[3])
+getarticledata(driver, news_links[4])
 ##########
 
 ##check the pages and print the info
