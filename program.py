@@ -7,10 +7,14 @@
 
 #https://realpython.com/python-web-scraping-practical-introduction/
 
+#python -m pip install selenium
+#python -m pip install webdriver_manager
+#python -m pip install bs4
+#python -m pip install lxml
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
-
 from selenium.webdriver.common.by import By
 
 from webdriver_manager.chrome import ChromeDriverManager
@@ -29,6 +33,7 @@ def getarticledata(insertdriver, link):
         #print(titl.get_attribute("innerHTML"))
         #print()
         tit = titl.get_attribute("innerHTML")
+        #soup = BeautifulSoup(tit)
         soup = BeautifulSoup(tit, features="lxml")
         text = soup.get_text()
         print(text)
