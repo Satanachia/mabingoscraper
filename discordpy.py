@@ -22,6 +22,7 @@ async def test(channel, links, driver):
     for link in links:
         pagecontents = Mabiscraper.getarticledata(driver, link)
         chunked = Mabiscraper.chunkcombiner(pagecontents)
+        print(chunked)
         await channel.send("# =-----------------------------------------------------------=")
         for pagecontent in chunked:
             await channel.send(pagecontent)
@@ -45,7 +46,7 @@ async def on_ready():
     CHeventsEN = discord.utils.get(guild.channels, name="eng-events")
     CHsalesEN = discord.utils.get(guild.channels, name="eng-sales")
     CHcommunityEN = discord.utils.get(guild.channels, name="eng-community")
-    CHmaintenanceEN = discord.utils.get(guild.channels, name="eng-maintenace")
+    CHmaintenanceEN = discord.utils.get(guild.channels, name="eng-maintenance")
     
     print(CHannounceEN)
     #print(CHannounceEN.id)
@@ -60,15 +61,6 @@ async def on_ready():
     links4 = Mabiscraper.start(scraper1.driver, NALINKS[3])
     links5 = Mabiscraper.start(scraper1.driver, NALINKS[4])
     links6 = Mabiscraper.start(scraper1.driver, NALINKS[5])
-
-    
-    #pagecontents = Mabiscraper.getarticledata(scraper.driver, links[0])
-    #chunked = Mabiscraper.chunkcombiner(pagecontents)
-    ##pagecontents = program.getarticledata(program.getdriver(), program.NALINKS[0])
-    #await CHannounceEN.send("=-----------------------=")
-    #for pagecontent in chunked:
-    #    await CHannounceEN.send(link
-    #    await CHannounceEN.send(pagecontent)
     
     await test(CHannounceEN, links1, scraper1.driver)
     await test(CHupdatesEN, links2, scraper1.driver)

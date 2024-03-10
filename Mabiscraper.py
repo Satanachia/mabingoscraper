@@ -73,6 +73,8 @@ def getarticledata(driver,link):
     
     return pagecontents
 
+#combines each line read into chunks up to the 2000 character discord limit to alleviate rate limiting on discord
+#send more lines at once is better than sending one line at a time
 def chunkcombiner(contents):
     chunks = []
     current = ""
@@ -93,7 +95,10 @@ def chunkcombiner(contents):
             current += content + "\n"
     
     #add big header for title
-    chunks[0] = "# " + chunks[0]
+    if(chunks):
+        chunks[0] = "# " + chunks[0]
+        if(current): #append current if there is anything in it
+            chunks.append(current)
     return chunks
 
 class Mabiscraper:
