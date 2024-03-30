@@ -21,6 +21,9 @@ from webdriver_manager.chrome import ChromeDriverManager
 
 from bs4 import BeautifulSoup
 
+#python -m pip install googletrans
+from googletrans import Translator
+
 import os
 
 #for NA
@@ -93,6 +96,8 @@ def chunkcombiner(contents):
         
         else:
             current += content + "\n"
+        
+        print(content)
     
     #add big header for title
     if(chunks):
@@ -100,6 +105,89 @@ def chunkcombiner(contents):
         if(current): #append current if there is anything in it
             chunks.append(current)
     return chunks
+
+def chunkcombiner2(contents):
+    chunks = []
+    current = ""
+    for content in contents:
+        #check if url contains "https://" just straight add it
+        if "https://" in content:
+            if(current):
+                chunks.append(current)
+            chunks.append(content)
+            current = ""
+        
+        elif(len(current) + len(content) > 2000): #discord limit 2000 character max append 
+            chunks.append(current)
+            #reset current
+            #current = ""
+            current = content
+        
+        else:
+            current += content + "\n"
+    
+    #add big header for title
+    if(chunks):
+        chunks[0] = "# " + chunks[0]
+        if(current): #append current if there is anything in it
+            chunks.append(current)
+            
+    print(current)
+    return chunks
+
+def getarticledataKR(driver,link):
+    #title in //div[@class='board_view01']/dl/dt/
+    #content in //dd[@view_cont_wrap/div[@view_cont]/*
+    driver.get(link)
+    
+    translator = Translator()
+    
+    pagecontents=[]
+    
+    #get title
+    title = driver.find_element("xpath", "//div[@class='board_view01']/dl/dt")
+    title = title.get_attribute("innerHTML")
+    #soup = BeautifulSoup(tit)
+    soup = BeautifulSoup(title, features="lxml")
+    text = soup.get_text()
+    
+    splitlines = text.splitlines()
+    for line in splitlines:
+        if(line): #if not empty string
+            #print("textis " + line)
+            tlline = translator.translate(line, dest="en", src="ko")
+            pagecontents.append(tlline.text)
+    
+    #get article content
+    article = driver.find_elements("xpath", "//dd[@class='view_cont_wrap']/div[@class='view_cont']/*")
+    #print(article)
+    for content in article:
+        #print(content.get_attribute("innerHTML"))
+        #print()
+        arti = content.get_attribute("innerHTML")
+        soup = BeautifulSoup(arti, features="lxml")
+        text = soup.get_text()
+        
+        text = text.replace('\xa0','')
+        
+        if(text == ""):
+            for source in soup.select("[src]"):
+                
+                if(source["src"]):
+                    #print(source["src"])
+                    #print("textis2 " +source["src"])
+                    pagecontents.append(source["src"])
+                
+        splitlines = text.splitlines()
+        for line in splitlines:
+            if(line): #if not empty string
+                #print("textis " + repr(line))
+                tlline = translator.translate(line, dest="en", src="ko")
+                pagecontents.append(tlline.text)
+    
+    #print(pagecontents)
+    return pagecontents
+    
 
 class Mabiscraper:
     def __init__(self):
@@ -154,7 +242,8 @@ NALINKS = [
 #"https://mabinogi.nexon.net/news/community",
 #"https://mabinogi.nexon.net/news/maintenance"]
 
-#get the the mainpage for specific type of page
+#get the the mainpage for specific type of page for NA
+#gets the links on the mainpage of given the NALINK and returns the links for articles in that category of NA webpage
 def start(driver,link):
     driver.get(link)
     driver.implicitly_wait(2)
@@ -171,8 +260,35 @@ def start(driver,link):
         print(link)
     return links
 
-#scraper = Mabiscraper()
+KRLINKS = [
+"https://mabinogi.nexon.com/page/news/notice_list.asp?searchtype=91&searchword=%B0%F8%C1%F6"
+]
+
+def startKR(driver,link):
+    driver.get(link)
+    driver.implicitly_wait(10) #might take longer cause overseas
+    
+    #target (ul class="notice">li>dl>dt>a   /li/dl/dt/a
+    anchors = driver.find_elements("xpath","//ul[@class='notice']/li/dl/dt/a")
+    links = []
+    #print(anchors)
+    for anchor in anchors:
+        link = anchor.get_attribute("href")
+        links.append(link)
+        print(link)
+    return links
+
+#call start(driver,NALINK) then getarticledata on the links that we got from start
+
+scraper = Mabiscraper()
 #links = start(scraper.driver, NALINKS[1])
+links = startKR(scraper.driver, KRLINKS[0])
+print("before chunked")
+data = getarticledataKR(scraper.driver, links[5])
+#print(data)
+#print("chunked")
+chunked = chunkcombiner2(data)
+#print(chunked)
 #data = getarticledata(scraper.driver, links[0])
 #chunked = chunkcombiner(data)
 #print("______________________________")
