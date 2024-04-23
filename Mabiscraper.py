@@ -26,6 +26,13 @@ from googletrans import Translator
 
 import os
 
+history = []
+f = open("readhistory.txt","r")
+for line in f:
+    history.append(line.strip())
+f.close()
+    
+
 #for NA
 def getarticledata(driver,link):
     #check the pages and print the info
@@ -65,13 +72,13 @@ def getarticledata(driver,link):
                 
                 if(source["src"]):
                     #print(source["src"])
-                    print("textis2 " +source["src"])
+                    #print("textis2 " +source["src"])
                     pagecontents.append(source["src"])
                 
         splitlines = text.splitlines()
         for line in splitlines:
             if(line): #if not empty string
-                print("textis " + repr(line))
+                #print("textis " + repr(line))
                 pagecontents.append(line)
     
     return pagecontents
@@ -97,7 +104,7 @@ def chunkcombiner(contents):
         else:
             current += content + "\n"
         
-        print(content)
+        #print(content)
     
     #add big header for title
     if(chunks):
@@ -112,18 +119,21 @@ def chunkcombiner2(contents):
     for content in contents:
         #check if url contains "https://" just straight add it
         if "https://" in content:
+            #print("entered html")
             if(current):
                 chunks.append(current)
             chunks.append(content)
             current = ""
         
         elif(len(current) + len(content) > 2000): #discord limit 2000 character max append 
+            #print("entered elif")
             chunks.append(current)
             #reset current
             #current = ""
             current = content
         
         else:
+            #print("entered else")
             current += content + "\n"
     
     #add big header for title
@@ -131,8 +141,12 @@ def chunkcombiner2(contents):
         chunks[0] = "# " + chunks[0]
         if(current): #append current if there is anything in it
             chunks.append(current)
-            
-    print(current)
+    
+    else: #chunks is empty
+        chunks.append(current)
+        chunks[0] = "# " + chunks[0]
+    
+    #print(current)
     return chunks
 
 def getarticledataKR(driver,link):
@@ -165,6 +179,8 @@ def getarticledataKR(driver,link):
         #print(content.get_attribute("innerHTML"))
         #print()
         arti = content.get_attribute("innerHTML")
+        
+        arti = arti.replace("<br>", "\n")
         soup = BeautifulSoup(arti, features="lxml")
         text = soup.get_text()
         
@@ -181,9 +197,15 @@ def getarticledataKR(driver,link):
         splitlines = text.splitlines()
         for line in splitlines:
             if(line): #if not empty string
-                #print("textis " + repr(line))
-                tlline = translator.translate(line, dest="en", src="ko")
-                pagecontents.append(tlline.text)
+                print("textis " + repr(line))
+                try:
+                    tlline = translator.translate(line, dest="en", src="ko")
+                except:
+                    pass
+                if tlline is None:
+                    pass
+                else:
+                    pagecontents.append(tlline.text)
     
     #print(pagecontents)
     return pagecontents
@@ -256,8 +278,14 @@ def start(driver,link):
     links = []
     for anchor in anchors:
         link = anchor.get_attribute("href")
-        links.append(link)
-        print(link)
+        if not(link in history): #if link hasnt been read before
+            links.append(link)
+            f = open("readhistory.txt","a+")
+            f.write(link+"\n")
+            f.close()
+            history.append(link)
+            print("added " + link)
+    print(links)
     return links
 
 KRLINKS = [
@@ -274,21 +302,34 @@ def startKR(driver,link):
     #print(anchors)
     for anchor in anchors:
         link = anchor.get_attribute("href")
-        links.append(link)
-        print(link)
+        if not(link in history): #if link hasnt been read before
+            links.append(link)
+            f = open("readhistory.txt","a+")
+            f.write(link+"\n")
+            f.close()
+            history.append(link)
+            print("added " + link)
+    print(links)
     return links
+
+#need way of saving and remembering what links have already been checked
 
 #call start(driver,NALINK) then getarticledata on the links that we got from start
 
-scraper = Mabiscraper()
+#scraper = Mabiscraper()
 #links = start(scraper.driver, NALINKS[1])
-links = startKR(scraper.driver, KRLINKS[0])
-print("before chunked")
-data = getarticledataKR(scraper.driver, links[5])
-#print(data)
-#print("chunked")
-chunked = chunkcombiner2(data)
+
+
+
+#links = startKR(scraper.driver, KRLINKS[0])
+#print("before chunked")
+#data = getarticledataKR(scraper.driver, links[0])
+##print(data)
+##print("chunked")
+#chunked = chunkcombiner2(data)
 #print(chunked)
+
+#for link in links:
 #data = getarticledata(scraper.driver, links[0])
 #chunked = chunkcombiner(data)
 #print("______________________________")
