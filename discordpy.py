@@ -39,7 +39,10 @@ async def transtest(channel, links, driver):
     for link in links:
         pagecontents = Mabiscraper.getarticledataKR(driver, link)
         chunked = Mabiscraper.chunkcombiner2(pagecontents)
-        print(chunked)
+        #print(chunked)
+        #for chunk in chunked:
+        #    print(len(chunk))
+        #    print(chunk)
         await channel.send("# =-----------------------------------------------------------=")
         for pagecontent in chunked:
             await channel.send(pagecontent)
@@ -99,6 +102,7 @@ async def on_ready():
     print("cycle done")
     #need to add code to repeat and make sure its not running the same link again
     
+    
     #print(links)
     #for link in links:
     #    await test(CHannounceEN, links, scraper.driver)
@@ -108,7 +112,6 @@ def job():
 #loop this section specified time
     client.run(TOKEN)
     client.close()
-
 #schedule.every().day.at("18:30").do(job,"NA")
 #schedule.every().day.at("05:00").do(job,"other half")
 #

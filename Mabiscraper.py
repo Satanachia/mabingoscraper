@@ -125,16 +125,36 @@ def chunkcombiner2(contents):
             chunks.append(content)
             current = ""
         
-        elif(len(current) + len(content) > 2000): #discord limit 2000 character max append 
-            #print("entered elif")
+        
+        if content == "-": #ignore single dashes
+            pass
+        #elif(len(content) > 2000): #if content itself is bigger than 2000 characters, needs to be broken smaller
+        #    #split the words so less than 2000
+        #    print("smallchunking")
+        #    temphold = content.split() #split into individual words separated by space
+        #    tempchunk = ""
+        #    
+        #    for word in temphold:
+        #        if(len(tempchunk) + len(word) + 1 > 2000):
+        #            #save this chunk to array and reset
+        #            chunks.append(tempchunk)
+        #            tempchunk = word
+        #            
+        #        else:    
+        #            tempchunk += word + " " #append word with a spacebar
+        
+        elif(len(current) + len(content) > 2000): #discord limit 2000 character max append  #if content+current bigger, save the current and start the next
+           # print("entered elif ", len(current), len(content))
+            #print(current)
             chunks.append(current)
             #reset current
             #current = ""
             current = content
         
         else:
-            #print("entered else")
+            #print("entered else " + str(len(current))
             current += content + "\n"
+            #print("entered else " + str(len(current)))
     
     #add big header for title
     if(chunks):
