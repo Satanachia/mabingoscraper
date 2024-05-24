@@ -16,7 +16,7 @@
 #python -m pip install pyvirtualdisplay
 #sudo apt-get install xvfb
 
-ispi = False
+ispi = True
 
 if(ispi):
     from pyvirtualdisplay import Display
@@ -137,8 +137,24 @@ class Mabiscraper:
             display.start()
             ########################
             #raspberry pi
+            self.options = webdriver.ChromeOptions()
+            self.options.add_argument("--no-sandbox");
+            self.options.add_argument("--disable-dev-shm-usage");
+            self.options.add_argument("--disable-renderer-backgrounding");
+            self.options.add_argument("--disable-background-timer-throttling");
+            self.options.add_argument("--disable-backgrounding-occluded-windows");
+            self.options.add_argument("--disable-client-side-phishing-detection");
+            self.options.add_argument("--disable-crash-reporter");
+            self.options.add_argument("--disable-oopr-debug-crash-dump");
+            self.options.add_argument("--no-crash-upload");
+            self.options.add_argument("--disable-gpu");
+            self.options.add_argument("--disable-extensions");
+            self.options.add_argument("--disable-low-res-tiling");
+            self.options.add_argument("--log-level=3");
+            self.options.add_argument("--silent");
+            
             browser_driver = Service('/usr/lib/chromium-browser/chromedriver')
-            self.driver = webdriver.Chrome(service=browser_driver)
+            self.driver = webdriver.Chrome(service=browser_driver, options=self.options)
     
         else:
             #add option to show the chrome window
