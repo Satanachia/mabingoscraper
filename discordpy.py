@@ -3,7 +3,6 @@ import os
 import discord
 from dotenv import load_dotenv
 
-import schedule
 import time
 
 from threading import Thread
@@ -12,6 +11,9 @@ from threading import Lock
 from discord.ext import tasks
 
 import Mabiscraper
+
+#python -m pip install discord.py
+#python -m pip install googletrans==3.1.0a0
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
@@ -176,10 +178,10 @@ async def on_ready():
 
 @client.event
 async def on_message(message):
-    print("---------")
-    print(message)
-    print(message.content)
-    print(message.channel)
+    #print("---------")
+    #print(message)
+    #print(message.content)
+    #print(message.channel)
     
     msgtxt = message.content
     msgchannel = message.channel.name
@@ -201,7 +203,7 @@ async def on_message(message):
         await client.close()
 
 #loop every 4 hours
-@tasks.loop(minutes=1)
+@tasks.loop(hours=2)
 async def autoloop():
     guild = variables["guild"]
     channel = discord.utils.get(guild.channels, name="botauto")

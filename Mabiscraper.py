@@ -12,6 +12,16 @@
 #python -m pip install bs4
 #python -m pip install lxml
 
+#sudo apt-get install chromium-chromedriver
+#python -m pip install pyvirtualdisplay
+#sudo apt-get install xvfb
+
+ispi = False
+
+if(ispi):
+    from pyvirtualdisplay import Display
+
+
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
@@ -120,16 +130,32 @@ def chunkcombiner2(contents):
 
 class Mabiscraper:
     def __init__(self):
-        #add option to show the chrome window
-        options = Options()
-        options.add_experimental_option("detach", True)
         
-        #keep cookies
-        dir_path = os.getcwd()
-        options.add_argument(f'user-data-dir={dir_path}/selenium')
+        if(ispi):
+            #for raspberry pi######
+            display = Display(visible=0, size=(1600, 1200))
+            display.start()
+            ########################
+            #raspberry pi
+            browser_driver = Service('/usr/lib/chromium-browser/chromedriver')
+            self.driver = webdriver.Chrome(service=browser_driver)
+    
+        else:
+            #add option to show the chrome window
+            options = Options()
+            options.add_experimental_option("detach", True)
+       
+            #keep cookies #only works on windows
+            dir_path = os.getcwd()
+            options.add_argument(f'user-data-dir={dir_path}/selenium')
         
-        #start the driver
-        self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+            #start the driver
+            #windows
+            self.driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
+        
+        
+        
+        self.driver.implicitly_wait(0) #wait infinitely
         
         #get cookies from landing page
         self.driver.get("https://mabinogi.nexon.net/landing")
@@ -144,7 +170,6 @@ class Mabiscraper:
 #gets the links on the mainpage of given the NALINK and returns the links for articles in that category of NA webpage        
     def start(self,link):
         self.driver.get(link)
-        self.driver.implicitly_wait(2)
 
         #find the divs containing the actual page to the page article
         #target "a" with "c-loadmore-items" class
@@ -166,7 +191,6 @@ class Mabiscraper:
 
     def startKR(self,link):
         self.driver.get(link)
-        self.driver.implicitly_wait(10) #might take longer cause overseas
         
         #target (ul class="notice">li>dl>dt>a   /li/dl/dt/a
         anchors = self.driver.find_elements("xpath","//ul[@class='notice']/li/dl/dt/a")
