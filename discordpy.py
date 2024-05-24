@@ -6,12 +6,19 @@ from dotenv import load_dotenv
 import schedule
 import time
 
+from threading import Thread
+from threading import Lock
+
+from discord.ext import tasks
+
 import Mabiscraper
 
 load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD = os.getenv("DISCORD_GUILD")
-client = discord.Client()
+
+intents = discord.Intents(messages=True, guilds=True)
+client = discord.Client(intents=intents)
 
 NALINKS = [
         "https://mabinogi.nexon.net/news/announcements",
@@ -25,9 +32,11 @@ KRLINKS = [
 "https://mabinogi.nexon.com/page/news/notice_list.asp?searchtype=91&searchword=%B0%F8%C1%F6"
 ]
 
-async def test(channel, links, driver):
+scraperlock = Lock()
+
+async def test(channel, links, scraper):
     for link in links:
-        pagecontents = Mabiscraper.getarticledata(driver, link)
+        pagecontents = scraper.getarticledata(link)
         chunked = Mabiscraper.chunkcombiner(pagecontents)
         print(chunked)
         await channel.send("# =-----------------------------------------------------------=")
@@ -35,9 +44,9 @@ async def test(channel, links, driver):
             await channel.send(pagecontent)
         await channel.send(link)
 
-async def transtest(channel, links, driver):
+async def transtest(channel, links, scraper):
     for link in links:
-        pagecontents = Mabiscraper.getarticledataKR(driver, link)
+        pagecontents = scraper.getarticledataKR(link)
         chunked = Mabiscraper.chunkcombiner2(pagecontents)
         #print(chunked)
         #for chunk in chunked:
@@ -48,20 +57,9 @@ async def transtest(channel, links, driver):
             await channel.send(pagecontent)
         await channel.send(link)
 
-
-@client.event
-async def on_ready():
-    for guild in client.guilds:
-        if guild.name == GUILD:
-            break
-    print(
-        f'{client.user} is connected to the following guild:\n'
-        f'{guild.name}(id: {guild.id})'
-    )
-    
-    #get the channels to send to
-    
-    
+#starts the scraper, checks the pages, posts the information and closes the scraper
+async def checkpages():
+    guild = variables['guild']
     CHannounceEN = discord.utils.get(guild.channels, name="eng-announce")
     CHupdatesEN = discord.utils.get(guild.channels, name="eng-updates")
     CHeventsEN = discord.utils.get(guild.channels, name="eng-events")
@@ -76,42 +74,145 @@ async def on_ready():
     #for i in range(20):
     #    await CHannounceEN.send(f"test{i}")
     
+    scraperlock.acquire()
+    
     #can only use 1 scraper at a time
     scraper1 = Mabiscraper.Mabiscraper()
     
     #loop this section
     #NA Side
-    links1 = Mabiscraper.start(scraper1.driver, NALINKS[0])
-    links2 = Mabiscraper.start(scraper1.driver, NALINKS[1])
-    links3 = Mabiscraper.start(scraper1.driver, NALINKS[2])
-    links4 = Mabiscraper.start(scraper1.driver, NALINKS[3])
-    links5 = Mabiscraper.start(scraper1.driver, NALINKS[4])
-    links6 = Mabiscraper.start(scraper1.driver, NALINKS[5])
+    links1 = scraper1.start(NALINKS[0])
+    links2 = scraper1.start(NALINKS[1])
+    links3 = scraper1.start(NALINKS[2])
+    links4 = scraper1.start(NALINKS[3])
+    links5 = scraper1.start(NALINKS[4])
+    links6 = scraper1.start(NALINKS[5])
     
-    await test(CHannounceEN, links1, scraper1.driver)
-    await test(CHupdatesEN, links2, scraper1.driver)
-    await test(CHeventsEN, links3, scraper1.driver)
-    await test(CHsalesEN, links4, scraper1.driver)
-    await test(CHcommunityEN, links5, scraper1.driver)
-    await test(CHmaintenanceEN, links6, scraper1.driver)
+    await test(CHannounceEN, links1, scraper1)
+    await test(CHupdatesEN, links2, scraper1)
+    await test(CHeventsEN, links3, scraper1)
+    await test(CHsalesEN, links4, scraper1)
+    await test(CHcommunityEN, links5, scraper1)
+    await test(CHmaintenanceEN, links6, scraper1)
     
     #KR Side
-    klinks1 = Mabiscraper.startKR(scraper1.driver, KRLINKS[0])
-    await transtest(CHnotificationKR, klinks1, scraper1.driver)
+    klinks1 = scraper1.startKR(KRLINKS[0])
+    await transtest(CHnotificationKR, klinks1, scraper1)
     
     print("cycle done")
     #need to add code to repeat and make sure its not running the same link again
     
+    scraper1.close()
     
+    scraperlock.release()
+    
+variables = {}
+@client.event
+async def on_ready():
+    for guild in client.guilds:
+        if guild.name == GUILD:
+            break
+    variables['guild'] = guild
+    #variables['client'] = client
+    print(
+        f'{client.user} is connected to the following guild:\n'
+        f'{guild.name}(id: {guild.id})'
+    )
+    
+    #get the channels to send to
+    
+    
+    #CHannounceEN = discord.utils.get(guild.channels, name="eng-announce")
+    #CHupdatesEN = discord.utils.get(guild.channels, name="eng-updates")
+    #CHeventsEN = discord.utils.get(guild.channels, name="eng-events")
+    #CHsalesEN = discord.utils.get(guild.channels, name="eng-sales")
+    #CHcommunityEN = discord.utils.get(guild.channels, name="eng-community")
+    #CHmaintenanceEN = discord.utils.get(guild.channels, name="eng-maintenance")
+    #
+    #CHnotificationKR = discord.utils.get(guild.channels, name="kr-notification")
+    #
+    #print(CHannounceEN)
+    ##print(CHannounceEN.id)
+    ##for i in range(20):
+    ##    await CHannounceEN.send(f"test{i}")
+    #
+    ##can only use 1 scraper at a time
+    #scraper1 = Mabiscraper.Mabiscraper()
+    #
+    ##loop this section
+    ##NA Side
+    #links1 = scraper1.start(NALINKS[0])
+    #links2 = scraper1.start(NALINKS[1])
+    #links3 = scraper1.start(NALINKS[2])
+    #links4 = scraper1.start(NALINKS[3])
+    #links5 = scraper1.start(NALINKS[4])
+    #links6 = scraper1.start(NALINKS[5])
+    #
+    #await test(CHannounceEN, links1, scraper1)
+    #await test(CHupdatesEN, links2, scraper1)
+    #await test(CHeventsEN, links3, scraper1)
+    #await test(CHsalesEN, links4, scraper1)
+    #await test(CHcommunityEN, links5, scraper1)
+    #await test(CHmaintenanceEN, links6, scraper1)
+    #
+    ##KR Side
+    #klinks1 = scraper1.startKR(KRLINKS[0])
+    #await transtest(CHnotificationKR, klinks1, scraper1)
+    #
+    #print("cycle done")
+    ##need to add code to repeat and make sure its not running the same link again
+    #
+    #scraper1.close()
+    
+    await checkpages()
+    
+    autoloop.start()
+    
+   ## await client.close()
+   
     #print(links)
     #for link in links:
     #    await test(CHannounceEN, links, scraper.driver)
+
+@client.event
+async def on_message(message):
+    print("---------")
+    print(message)
+    print(message.content)
+    print(message.channel)
+    
+    msgtxt = message.content
+    msgchannel = message.channel.name
+    publicchannel = False
+    privatechannel = False
+
+    if(msgchannel == "botmanual"):
+        publicchannel = True
+    if(msgchannel == "shutdown"):
+        privatechannel = True
+
+    if(publicchannel and msgtxt == "check"):
+        await message.channel.send("Starting Check")
+        await checkpages()
+        await message.channel.send("Check Completed")
         
+    elif(privatechannel and msgtxt == "shutdown"):
+        await message.channel.send("Shutting Down")
+        await client.close()
+
+#loop every 4 hours
+@tasks.loop(minutes=1)
+async def autoloop():
+    guild = variables["guild"]
+    channel = discord.utils.get(guild.channels, name="botauto")
+    await channel.send("Starting Auto")
+    await checkpages()
+    await channel.send("Completed")
+
 
 def job():
 #loop this section specified time
     client.run(TOKEN)
-    client.close()
 #schedule.every().day.at("18:30").do(job,"NA")
 #schedule.every().day.at("05:00").do(job,"other half")
 #
