@@ -130,7 +130,7 @@ def chunkcombiner2(contents):
 
 class Mabiscraper:
     def __init__(self):
-        
+        dir_path = os.getcwd()
         if(ispi):
             #for raspberry pi######
             display = Display(visible=0, size=(1600, 1200))
@@ -138,20 +138,21 @@ class Mabiscraper:
             ########################
             #raspberry pi
             self.options = webdriver.ChromeOptions()
-            self.options.add_argument("--no-sandbox");
-            self.options.add_argument("--disable-dev-shm-usage");
-            self.options.add_argument("--disable-renderer-backgrounding");
-            self.options.add_argument("--disable-background-timer-throttling");
-            self.options.add_argument("--disable-backgrounding-occluded-windows");
-            self.options.add_argument("--disable-client-side-phishing-detection");
-            self.options.add_argument("--disable-crash-reporter");
-            self.options.add_argument("--disable-oopr-debug-crash-dump");
-            self.options.add_argument("--no-crash-upload");
-            self.options.add_argument("--disable-gpu");
-            self.options.add_argument("--disable-extensions");
-            self.options.add_argument("--disable-low-res-tiling");
-            self.options.add_argument("--log-level=3");
-            self.options.add_argument("--silent");
+            #self.options.add_argument("--no-sandbox");
+            #self.options.add_argument("--disable-dev-shm-usage");
+            #self.options.add_argument("--disable-renderer-backgrounding");
+            #self.options.add_argument("--disable-background-timer-throttling");
+            #self.options.add_argument("--disable-backgrounding-occluded-windows");
+            #self.options.add_argument("--disable-client-side-phishing-detection");
+            #self.options.add_argument("--disable-crash-reporter");
+            #self.options.add_argument("--disable-oopr-debug-crash-dump");
+            #self.options.add_argument("--no-crash-upload");
+            #self.options.add_argument("--disable-gpu");
+            #self.options.add_argument("--disable-extensions");
+            #self.options.add_argument("--disable-low-res-tiling");
+            #self.options.add_argument("--log-level=3");
+            #self.options.add_argument("--silent");
+            self.options.add_argument(f'user-data-dir={dir_path}/selenium')
             
             browser_driver = Service('/usr/lib/chromium-browser/chromedriver')
             self.driver = webdriver.Chrome(service=browser_driver, options=self.options)
@@ -162,7 +163,6 @@ class Mabiscraper:
             options.add_experimental_option("detach", True)
        
             #keep cookies #only works on windows
-            dir_path = os.getcwd()
             options.add_argument(f'user-data-dir={dir_path}/selenium')
         
             #start the driver

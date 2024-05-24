@@ -19,7 +19,7 @@ load_dotenv()
 TOKEN = os.getenv("DISCORD_TOKEN")
 GUILD = os.getenv("DISCORD_GUILD")
 
-intents = discord.Intents(messages=True, guilds=True)
+intents = discord.Intents(messages=True, guilds=True, message_content=True)
 client = discord.Client(intents=intents)
 
 NALINKS = [
@@ -166,7 +166,7 @@ async def on_ready():
     #
     #scraper1.close()
     
-    await checkpages()
+    ##await checkpages()
     
     autoloop.start()
     
