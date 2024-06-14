@@ -10,6 +10,9 @@ from threading import Lock
 
 from discord.ext import tasks
 
+import datetime
+#python -m pip install datetime
+
 import Mabiscraper
 
 #python -m pip install discord.py
@@ -59,6 +62,16 @@ async def transtest(channel, links, scraper):
             await channel.send(pagecontent)
         await channel.send(link)
 
+async def runcheckpages():
+    try:
+        scraperlock.acquire()
+        await checkpages()
+    except Exception as e:
+        print("error running checkpages()")
+        print(e)
+    finally:
+        scraperlock.release()
+
 #starts the scraper, checks the pages, posts the information and closes the scraper
 async def checkpages():
     guild = variables['guild']
@@ -75,8 +88,6 @@ async def checkpages():
     #print(CHannounceEN.id)
     #for i in range(20):
     #    await CHannounceEN.send(f"test{i}")
-    
-    scraperlock.acquire()
     
     #can only use 1 scraper at a time
     scraper1 = Mabiscraper.Mabiscraper()
@@ -105,8 +116,6 @@ async def checkpages():
     #need to add code to repeat and make sure its not running the same link again
     
     scraper1.close()
-    
-    scraperlock.release()
     
 variables = {}
 @client.event
@@ -195,20 +204,32 @@ async def on_message(message):
 
     if(publicchannel and msgtxt == "check"):
         await message.channel.send("Starting Check")
-        await checkpages()
+        await runcheckpages()
+            
         await message.channel.send("Check Completed")
         
     elif(privatechannel and msgtxt == "shutdown"):
         await message.channel.send("Shutting Down")
         await client.close()
 
+utc = datetime.timezone.utc
 #loop every 4 hours
-@tasks.loop(hours=2)
+#5:05pm pst
+#1:05pm kst
+times = [
+    datetime.time(hour=0, minute=5, tzinfo=utc), #5:05pm pst
+    datetime.time(hour=4, minute=5, tzinfo=utc) #1:05pm kst
+]
+
+
+#@tasks.loop(hours=2)
+@tasks.loop(time=times)
 async def autoloop():
     guild = variables["guild"]
     channel = discord.utils.get(guild.channels, name="botauto")
     await channel.send("Starting Auto")
-    await checkpages()
+    await runcheckpages()
+    
     await channel.send("Completed")
 
 
